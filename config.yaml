@@ -4,3 +4,9 @@ data:
   interim: "data/interim/"
   external: "data/external/"
   dvc_remote: "github"
+
+models:
+  dir: "models/"
+
+mlflow:
+  tracking_uri: "mlruns"
