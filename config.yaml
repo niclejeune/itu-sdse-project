@@ -1,0 +1,6 @@
+data:
+  raw: "data/raw/dataset.csv"
+  processed: "data/processed/dataset_processed.csv"
+  interim: "data/interim/"
+  external: "data/external/"
+  dvc_remote: "github"
