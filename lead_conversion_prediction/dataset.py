@@ -7,7 +7,7 @@ import datetime
 import typer
 
 from loguru import logger
-from lead_conversion_prediction.config import RAW_DATA_DIR, INTERIM_DATA_DIR
+from lead_conversion_prediction.config import RAW_DATA_PATH, INTERIM_DATA_DIR
 
 app = typer.Typer()
 
@@ -22,7 +22,7 @@ def describe_numeric_col(x):
 
 @app.command()
 def main(
-    input_path: Path = RAW_DATA_DIR / "raw_data.csv",
+    input_path: Path = RAW_DATA_PATH,
     output_path: Path = INTERIM_DATA_DIR / "data_cleaned.csv",
     max_date: str = "2024-01-31",
     min_date: str = "2024-01-01",

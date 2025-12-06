@@ -10,6 +10,7 @@ mlruns/
 /data/processed/*
 !/data/processed/X_test.csv
 !/data/processed/y_test.csv
+!/data/processed/*.dvc
 
 
 # Mac OS-specific storage files
@@ -200,3 +201,8 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Models
+models/*
+!models/.gitkeep
+!models/*.json

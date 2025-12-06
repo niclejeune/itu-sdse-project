@@ -7,7 +7,8 @@ import joblib
 from sklearn.preprocessing import MinMaxScaler
 
 from loguru import logger
-from lead_conversion_prediction.config import INTERIM_DATA_DIR, MODELS_DIR
+from lead_conversion_prediction.config import INTERIM_DATA_DIR, TRAIN_DATA_PATH
+from lead_conversion_prediction.utils.storage import save_model
 
 app = typer.Typer()
 
@@ -24,7 +25,7 @@ def impute_missing_values(x, method="mean"):
 @app.command()
 def main(
     input_path: Path = INTERIM_DATA_DIR / "data_cleaned.csv",
-    output_path: Path = INTERIM_DATA_DIR / "train_data_gold.csv",
+    output_path: Path = TRAIN_DATA_PATH,
 ):
     """Feature engineering pipeline."""
     logger.info("Starting feature engineering...")
@@ -54,11 +55,9 @@ def main(
     logger.info("Categorical variables imputed")
     
     # Data standardization using MinMaxScaler
-    scaler_path = MODELS_DIR / 'scaler.pkl'
     scaler = MinMaxScaler()
     scaler.fit(cont_vars)
-    joblib.dump(value=scaler, filename=scaler_path)
-    logger.info(f'Saved scaler to {scaler_path}')
+    save_model(scaler, 'scaler.pkl')
     
     cont_vars = pd.DataFrame(scaler.transform(cont_vars), columns=cont_vars.columns)
     logger.info("Data standardization complete")
@@ -91,6 +90,8 @@ def main(
     logger.info("Source binning complete")
     
     # Save gold dataset
+    # Ensure output directory exists
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     data.to_csv(output_path, index=False)
     logger.success(f"Feature engineering complete. Gold data saved to {output_path}")
 

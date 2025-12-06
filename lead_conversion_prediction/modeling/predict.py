@@ -5,7 +5,7 @@ import typer
 from xgboost import XGBRFClassifier
 
 from loguru import logger
-from lead_conversion_prediction.config import MODELS_DIR, PROCESSED_DATA_DIR
+from lead_conversion_prediction.config import MODELS_DIR, TEST_X_PATH, TEST_Y_PATH
 
 app = typer.Typer()
 
@@ -13,8 +13,8 @@ app = typer.Typer()
 @app.command()
 def main(
     model_path: Path = MODELS_DIR / "lead_model_xgboost.json",
-    features_path: Path = PROCESSED_DATA_DIR / "X_test.csv",
-    labels_path: Path = PROCESSED_DATA_DIR / "y_test.csv",
+    features_path: Path = TEST_X_PATH,
+    labels_path: Path = TEST_Y_PATH,
 ):
     """Perform inference using the best model."""
     logger.info("Starting model inference...")

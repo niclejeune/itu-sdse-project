@@ -13,7 +13,7 @@ from sklearn.metrics import classification_report, accuracy_score
 from scipy.stats import uniform, randint
 
 from loguru import logger
-from lead_conversion_prediction.config import INTERIM_DATA_DIR, MODELS_DIR, PROCESSED_DATA_DIR, REPORTS_DIR, PROJ_ROOT
+from lead_conversion_prediction.config import MODELS_DIR, REPORTS_DIR, TRAIN_DATA_PATH
 
 warnings.filterwarnings('ignore')
 
@@ -30,7 +30,7 @@ def create_dummy_cols(df, col):
 
 @app.command()
 def main(
-    input_path: Path = INTERIM_DATA_DIR / "train_data_gold.csv",
+    input_path: Path = TRAIN_DATA_PATH,
 ):
     """Model training pipeline."""
     logger.info("Starting model training...")

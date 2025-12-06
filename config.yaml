@@ -1,6 +1,10 @@
 data:
-  raw: "data/raw/dataset.csv"
-  processed: "data/processed/dataset_processed.csv"
+  raw: "data/raw/raw_data.csv"
+  processed: "data/processed/"
+  train: "data/processed/train_data_gold.csv"
+  test:
+    X: "data/processed/X_test.csv"
+    y: "data/processed/y_test.csv"
   interim: "data/interim/"
   external: "data/external/"
   dvc_remote: "github"

@@ -1,5 +1,6 @@
 from pathlib import Path
-
+import yaml
+import os
 from dotenv import load_dotenv
 from loguru import logger
 
@@ -10,14 +11,28 @@ load_dotenv()
 PROJ_ROOT = Path(__file__).resolve().parents[1]
 logger.info(f"PROJ_ROOT path is: {PROJ_ROOT}")
 
-DATA_DIR = PROJ_ROOT / "data"
-RAW_DATA_DIR = DATA_DIR / "raw"
-INTERIM_DATA_DIR = DATA_DIR / "interim"
-PROCESSED_DATA_DIR = DATA_DIR / "processed"
-EXTERNAL_DATA_DIR = DATA_DIR / "external"
+def load_config():
+    config_path = PROJ_ROOT / "config.yaml"
+    with open(config_path, "r") as f:
+        return yaml.safe_load(f)
 
-MODELS_DIR = PROJ_ROOT / "models"
+CONFIG = load_config()
 
+# Data Paths
+DATA_CONFIG = CONFIG.get("data", {})
+RAW_DATA_PATH = PROJ_ROOT / DATA_CONFIG.get("raw", "data/raw/raw_data.csv")
+INTERIM_DATA_DIR = PROJ_ROOT / DATA_CONFIG.get("interim", "data/interim/")
+PROCESSED_DATA_DIR = PROJ_ROOT / DATA_CONFIG.get("processed", "data/processed/")
+TRAIN_DATA_PATH = PROJ_ROOT / DATA_CONFIG.get("train", "data/processed/train_data_gold.csv")
+TEST_X_PATH = PROJ_ROOT / DATA_CONFIG.get("test", {}).get("X", "data/processed/X_test.csv")
+TEST_Y_PATH = PROJ_ROOT / DATA_CONFIG.get("test", {}).get("y", "data/processed/y_test.csv")
+EXTERNAL_DATA_DIR = PROJ_ROOT / DATA_CONFIG.get("external", "data/external/")
+
+# Model Paths
+MODELS_CONFIG = CONFIG.get("models", {})
+MODELS_DIR = PROJ_ROOT / MODELS_CONFIG.get("dir", "models/")
+
+# Reports Paths
 REPORTS_DIR = PROJ_ROOT / "reports"
 FIGURES_DIR = REPORTS_DIR / "figures"
 
