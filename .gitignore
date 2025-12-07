@@ -205,4 +205,4 @@ cython_debug/
 # Models
 models/*
 !models/.gitkeep
-!models/*.json
+!models/*.jsondagger_context/

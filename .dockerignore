@@ -1,0 +1,14 @@
+venv
+venv/
+.git
+.git/
+.dvc
+.dvc/
+mlruns
+mlruns/
+__pycache__
+__pycache__/
+*.pyc
+.DS_Store
+dagger
+dagger/

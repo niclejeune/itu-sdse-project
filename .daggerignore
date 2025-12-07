@@ -1,0 +1,21 @@
+# Large directories
+venv/
+.git/
+.dvc/
+mlruns/
+notebooks/
+data/
+models/
+reports/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# OS files
+.DS_Store
+
+# The dagger module itself (avoid recursion)
+dagger/

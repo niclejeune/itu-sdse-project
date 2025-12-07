@@ -62,6 +62,16 @@ create_environment:
 data: requirements
 	$(PYTHON_INTERPRETER) lead_conversion_prediction/dataset.py
 
+## Train the model
+.PHONY: train
+train: requirements
+	PYTHONPATH=. $(PYTHON_INTERPRETER) -m lead_conversion_prediction.modeling.train
+
+## Run predictions (validation)
+.PHONY: predict
+predict: requirements
+	PYTHONPATH=. $(PYTHON_INTERPRETER) -m lead_conversion_prediction.modeling.predict
+
 
 #################################################################################
 # Self Documenting Commands                                                     #

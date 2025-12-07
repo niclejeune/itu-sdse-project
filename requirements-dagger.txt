@@ -1,0 +1,35 @@
+# Minimal requirements for Dagger pipeline (training & prediction only)
+# Excludes mlflow and its many dependencies (flask, gunicorn, etc.)
+
+# Core ML
+numpy==2.2.6
+pandas==2.3.3
+scikit-learn==1.7.2
+xgboost==3.1.2
+scipy==1.15.3
+joblib==1.5.2
+
+# Utilities
+loguru==0.7.3
+typer==0.20.0
+click==8.3.1
+rich==14.2.0
+python-dotenv==1.2.1
+PyYAML==6.0.3
+
+# typer dependencies
+shellingham==1.5.4
+markdown-it-py==4.0.0
+mdurl==0.1.2
+Pygments==2.19.2
+
+# pandas/numpy dependencies  
+python-dateutil==2.9.0.post0
+pytz==2025.2
+tzdata==2025.2
+six==1.17.0
+threadpoolctl==3.6.0
+
+# typing
+typing_extensions==4.15.0
+annotated-types==0.7.0
