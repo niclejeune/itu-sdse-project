@@ -32,8 +32,34 @@ def main(
     actual = y.head(5)
     
     # Print results in the expected format
+    # Print results in the expected format
     print(predictions, "   lead_indicator")
     print(actual.to_string(header=False))
+
+    # Validation Logic
+    expected_predictions = "[0 1 0 1 0]"
+    expected_actual = """0  0.0
+1  1.0
+2  0.0
+3  1.0
+4  0.0"""
+
+    actual_predictions_str = str(predictions)
+    actual_actual_str = actual.to_string(header=False)
+
+    import sys
+    
+    if actual_predictions_str.strip() != expected_predictions.strip():
+        logger.error("Validation Failed: Predictions do not match expected output.")
+        print(f"EXPECTED PREDICTIONS:\n{expected_predictions}")
+        print(f"ACTUAL PREDICTIONS:\n{actual_predictions_str}")
+        sys.exit(1)
+
+    if actual_actual_str.strip() != expected_actual.strip():
+        logger.error("Validation Failed: Actual values do not match expected output.")
+        print(f"EXPECTED ACTUAL:\n{expected_actual}")
+        print(f"ACTUAL ACTUAL:\n{actual_actual_str}")
+        sys.exit(1)
     
     logger.success("Inference complete!")
 

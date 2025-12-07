@@ -1,0 +1,39 @@
+name: "Model Validator"
+description: "Validates the trained model by running inference and checking output"
+inputs:
+  models-artifact-name:
+    description: "Name of the artifact containing the models"
+    required: false
+    default: "model"
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install Dependencies
+      shell: bash
+      run: |
+        pip install -r requirements.txt
+        pip install joblib pandas typer loguru xgboost scikit-learn
+
+    - name: Download Model Artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: ${{ inputs.models-artifact-name }}
+        path: models_download
+
+    - name: Extract Model Artifact
+      shell: bash
+      run: |
+        tar -xvf models_download/models.tar
+        # Extract models to default path expected by config for discovery
+
+    - name: Run Validation
+      shell: bash
+      run: |
+        # Ensure PYTHONPATH includes the current directory so modules can be imported
+        export PYTHONPATH=$PYTHONPATH:.
+        python -m lead_conversion_prediction.modeling.predict

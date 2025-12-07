@@ -31,3 +31,15 @@ jobs:
         with:
           name: model
           path: models.tar
+
+  validate-model:
+    needs: dagger-pipeline
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Validate Model
+        uses: ./.github/actions/model-validator
+        with:
+          models-artifact-name: model
