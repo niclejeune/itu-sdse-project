@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  dagger-pipeline:
+  main-pipeline:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -18,6 +18,12 @@ jobs:
 
       - name: Pull DVC Data
         run: dvc update data/raw/raw_data.csv.dvc
+
+      - name: Install Test Dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run Unit Tests
+        run: python -m pytest tests/
 
       - name: Run Dagger Pipeline
         uses: dagger/dagger-for-github@v7
@@ -33,7 +39,7 @@ jobs:
           path: models.tar
 
   validate-model:
-    needs: dagger-pipeline
+    needs: main-pipeline
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
