@@ -1,99 +1,91 @@
 # Lead Conversion Prediction
 
-Predicts whether a user signup will convert into a paying customer.
+Predicts whether a new user signup will convert to a paying customer, packaged as a reproducible MLOps project.
 
-## Project Context
+## Guarantees
+- Reproducible models from versioned code + versioned data (DVC).
+- Identical execution locally and in CI via a single Dagger runtime.
+- Deterministic regression detection via fixed inference outputs.
 
-This repository is a solution for the **ITU BDS MLOPS'25 Project**. The goal was to take an existing monolithic Python notebook and restructure it into a professional, reproducible, and automated MLOps project. Standard MLOps practices are adheared to, and the cookie cutter data science project structure is used.
+## Why this exists
+- Built for the ITU BDS MLOPS'25 assignment to turn a single exploratory notebook into a production-quality pipeline.
+- Goal: give others a fast, portable way to rerun, inspect, and extend the model without guessing how the notebook worked.
 
-### Architecture
+## Design principles
+- Parity first: the Dagger container is the single runtime for local development and CI.
+- Immutable truth: `data/raw/raw_data.csv` comes from DVC and is never edited in place.
+- Single source of config: `config.yaml` controls all data, model, and report paths.
+- Unit testing: pytest covers data prep, feature engineering, storage helpers, and encoding; `predict.py` checks the expected inference output.
+- Portable artifacts: models, scaler, and column list are saved in `models/` and can be packed into `models.tar` for transfer.
 
-The project follows the architecture defined in the diagram below:
-
+## How it works
+Conceptually, this project is a deterministic data -> features -> model -> artifact compiler.
 ![Project Architecture](docs/project-architecture.png)
 
-## Quick Start
+- Data flows from DVC-tracked `data/raw/` through cleaning (`lead_conversion_prediction.dataset`) into `data/interim/`, then through feature engineering (`lead_conversion_prediction.features`) into `data/processed/`.
+- Training (`lead_conversion_prediction.modeling.train`) builds a tree-based XGBoost baseline plus a Logistic Regression variant, logs metrics to `reports/model_results.json`, and saves artifacts and the column manifest to `models/`.
+- Inference (`lead_conversion_prediction.modeling.predict`) loads `models/lead_model_xgboost.pkl` and asserts the first five predictions on `data/processed/X_test.csv` match the reference output, catching regressions.
+- The Dagger module (`dagger/pipeline.go`) wraps the flow in a Python 3.10 container, caches pip installs, and exposes discrete steps (`clean-data`, `prepare-data`, `train`, `predict`) plus a full `pipeline` that packages `models.tar`.
 
-### 1. Environment Setup
+> *Design decision about default model choice*: The original notebook used `RandomizedSearchCV` for Logistic Regression without a fixed `random_state`, making results non-deterministic. To guarantee reproducibility, the pipeline defaults to the XGBoost model while still training and logging both variants.
+The default is explicit (inference loads `models/lead_model_xgboost.pkl`), and both `RandomizedSearchCV` runs are now seeded with `random_state=42` to keep training repeatable.
 
-First, ensure Python 3.10+ is installed. Then install the dependencies:
+## Run it (local with CI parity)
+Prereqs: Python 3.10, Docker running, Dagger CLI, and DVC. Install Python deps once:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. Fetching Data
-
-[DVC (Data Version Control)](https://dvc.org/) is used to manage the datasets. The data is hosted remotely. To pull the latest version of the raw data:
-
+1) Pull the immutable raw data from the GitHub DVC remote:
 ```bash
 dvc update data/raw/raw_data.csv.dvc
 ```
-
-This will populate `data/raw/` with the original immutable dataset.
-
-## Project Structure
-
-```
-├── .github/workflows  <- GitHub Actions for CI/CD
-├── dagger/            <- Dagger pipeline definitions (Go)
-├── data/              <- Data directory (raw, interim, processed)
-├── lead_conversion_prediction/ <- Main source code
-│   ├── dataset.py     <- Data cleaning and download scripts
-│   ├── features.py    <- Feature engineering logic
-│   ├── modeling/      <- Model training and inference
-│   └── utils/         <- Utility scripts (storage, config)
-├── models/            <- Serialized model artifacts (tracked by DVC)
-├── notebooks/         <- Jupyter notebooks for exploration
-├── tests/             <- Unit tests
-├── Makefile           <- Make commands
-├── dagger.json        <- Dagger module config
-└── dvc.yaml           <- DVC pipeline configuration
-```
-
-## Running the Pipeline
-
-[Dagger](https://dagger.io/) is used to containerize the ML pipeline. This ensures that the code runs exactly the same way locally as it does in the CI environment.
-
-**Prerequisites:**
-- Docker running
-- Dagger CLI
-
-### Run the Full Pipeline
-
-To clean data, engineer features, train the model, and package the artifacts:
-
+2) Preferred: run the end-to-end containerized pipeline and export the model bundle:
 ```bash
 dagger call pipeline --source . export --path ./models.tar
 ```
-
-This commands runs the entire end-to-end flow and exports the trained model to `models.tar`.
-
-### Run Individual Steps
-
-You can also run specific stages of the pipeline:
-
+Models are also written to `models/` inside the container and included in `models.tar`.
+3) Run individual steps while iterating:
 ```bash
-dagger call prepare-data --source .  # Data cleaning & features
-dagger call train --source .         # Training only
-dagger call predict --source .       # Run inference validation
+dagger call clean-data --source .
+dagger call prepare-data --source .
+dagger call train --source .
+dagger call predict --source .
 ```
+4) If Docker is unavailable, the same code paths run directly:
+```bash
+make data && make train && make predict
+```
+> Note: running without Docker skips the container isolation guarantees but exercises the exact same Python entry points used inside the Dagger pipeline.
 
-## Automation (CI/CD)
+## Automation
+- `.github/workflows/main.yml` runs on every push and PR to `main`: DVC update, pytest, the Dagger pipeline, and uploads `models.tar`.
+- A follow-up job uses `.github/actions/model-validator` to download the artifact and rerun `lead_conversion_prediction.modeling.predict`, catching any difference against the expected inference output.
+- Pip caching and dependency isolation live inside the Dagger container, keeping CI runs aligned with local runs.
 
-GitHub Actions is used to automate the workflow.
+## Data and artifact management
+- Raw data: `data/raw/raw_data.csv` tracked by DVC (`remote github`: https://github.com/Jeppe-T-K/itu-sdse-project-data).
+- Interim: cleaned data and stats in `data/interim/` (`data_cleaned.csv`, `outlier_summary.csv`, `date_limits.json`, `columns_drift.json`).
+- Processed: feature-complete datasets in `data/processed/` (including `X_test.csv` and `y_test.csv` for inference validation).
+- Models: serialized models, scaler, and `columns_list.json` in `models/`; metrics in `reports/model_results.json`.
 
-1.  **CI Pipeline**: Triggered on push/PR to `main`.
-    -   Pulls data via DVC.
-    -   Runs Unit Tests (`pytest`).
-    -   Executes the Dagger pipeline to train the model.
-    -   Uploads the model artifact.
-2.  **Validation**: A generic `model-validator` action picks up the trained artifact and runs inference to verify it produces the expected output.
+## Project layout (CCDS)
+- `lead_conversion_prediction/`: versioned Python package so data prep, features, modeling, and utilities stay importable and testable.
+- `data/`: raw, interim, processed, and external splits make lineage explicit and keep raw files immutable.
+- `models/` and `reports/`: trained artifacts kept apart from evaluation outputs
+- `dagger/`: containerized pipeline definition that enforces the single runtime used locally and in CI.
+- `notebooks/`: exploratory analysis isolated from the production path.
+- `tests/`: unit tests that validate transformation and storage contracts.
 
-## Data & Artifact Management
+## Non-goals
+- Online or batch serving
+- Model monitoring or drift detection
+- Hyperparameter optimization at scale
 
--   **Raw Data**: Stored in `data/raw/`, never modified.
--   **Processed Data**: Stored in `data/processed/`.
--   **Model Artifacts**: Saved in `models/`.
-
-A helper module `lead_conversion_prediction.utils.storage` is used to ensure standardized paths for loading and saving these files.
+## Guide for safe extension
+- Do not edit `data/raw/raw_data.csv` directly. Add new raw inputs through DVC and update `data/raw/raw_data.csv.dvc` if the source changes.
+- Keep `lead_conversion_prediction.features` categorical columns and `bin_source` mapping in sync with any schema changes; rerun training to refresh `columns_list.json`.
+- Inference validation expects the first five predictions on `data/processed/X_test.csv` to match `[0 1 0 1 0]`. If the reference data or model changes intentionally, update `lead_conversion_prediction.modeling.predict` and the CI validator together.
+- When adding dependencies needed in the container, update both `requirements.txt` and `requirements-dagger.txt`.
+- Always run `pytest` and `dagger call predict --source .` before shipping to make sure contracts and outputs still hold.
